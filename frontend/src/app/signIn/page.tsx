@@ -15,9 +15,10 @@ export default function AuthForms() {
   const [showPassword, setShowPassword] = useState(false);
 
   // Form state
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginName, setLoginName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupName, setSignupName] = useState("");
+  const [loginError, setLoginError] = useState("");
  
   const [signupPassword, setSignupPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -28,13 +29,46 @@ export default function AuthForms() {
     setIsLogin(!isLogin);
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login:", { loginEmail, loginPassword, rememberMe });
-  };
+    setLoginError("");
+    
+    const form = e.target as HTMLFormElement;
+    const loginName = form.loginusername.value; 
+    const loginPassword = form.loginpassword.value; 
+    
+    try {
+      const response = await fetch('http://localhost:5000/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: loginName,
+          password: loginPassword,
+        }),
+      });
+      
+      const data = await response.json();
+      console.log("Backend response:", data); 
+      
+      if (response.ok) {
+        console.log("Login successful:", data);
 
- 
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+
+        window.location.href = '/dashboard'; 
+
+      } else {
+        setLoginError(data.message || "Invalid username or password");
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      setLoginError("An error occurred while logging in.");
+    }
+  };
+  
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,23 +149,23 @@ export default function AuthForms() {
                 {isLogin ? (
                   <form onSubmit={handleLoginSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="login-username">Username</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="email"
-                          type="email"
-                          placeholder="m@example.com"
+                          id="loginusername"
+                          type="text"
+                          placeholder="Enter your username here"
                           className="pl-10"
-                          value={loginEmail}
-                          onChange={(e) => setLoginEmail(e.target.value)}
+                          value={loginName}
+                          onChange={(e) => setLoginName(e.target.value)}
                           required
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <Label htmlFor="password">Password</Label>
+                        <Label htmlFor="login-password">Password</Label>
                         <a
                           href="#"
                           className="text-sm text-primary hover:underline"
@@ -142,7 +176,7 @@ export default function AuthForms() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="password"
+                          id="loginpassword"
                           type={showPassword ? "text" : "password"}
                           className="pl-10 pr-10"
                           value={loginPassword}
@@ -189,7 +223,13 @@ export default function AuthForms() {
                         <ArrowRight className="h-4 w-4" />
                       </motion.div>
                     </Button>
+                    {loginError && (
+                    <div style={{ color: 'red', marginTop: '10px' }}>
+                      {loginError}
+                    </div>
+                    )}
                   </form>
+                  
                 ) : (
                   <form onSubmit={handleSignupSubmit} className="space-y-4">
                     <div className="space-y-2">
@@ -201,7 +241,7 @@ export default function AuthForms() {
                           type="text"
                           placeholder="Username"
                           className="pl-10"
-                          value={signupName} // Assuming you are still using signupName for Username
+                          value={signupName} 
                           onChange={(e) => setSignupName(e.target.value)}
                           required
                         />
