@@ -1,42 +1,83 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight, Mail, Lock, User, Eye, EyeOff } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
+import { useState } from "react";
 
 export default function AuthForms() {
-  const [isLogin, setIsLogin] = useState(true)
-  const [showPassword, setShowPassword] = useState(false)
+  const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Form state
-  const [loginEmail, setLoginEmail] = useState("")
-  const [loginPassword, setLoginPassword] = useState("")
-  const [signupName, setSignupName] = useState("")
-  const [signupEmail, setSignupEmail] = useState("")
-  const [signupPassword, setSignupPassword] = useState("")
-  const [rememberMe, setRememberMe] = useState(false)
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
+  const [signupError, setSignupError] = useState("");
 
   const toggleForm = () => {
-    setIsLogin(!isLogin)
-  }
+    setIsLogin(!isLogin);
+  };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Handle login logic here
-    console.log("Login:", { loginEmail, loginPassword, rememberMe })
-  }
+    console.log("Login:", { loginEmail, loginPassword, rememberMe });
+  };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Handle signup logic here
-    console.log("Signup:", { signupName, signupEmail, signupPassword })
-  }
+ 
+
+  const handleSignupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/;
+  
+    if (!passwordRegex.test(signupPassword)) {
+      alert("Password must contain at least one lowercase letter, one uppercase letter, and one special character!");
+      return;
+    }
+  
+    if (signupPassword !== signupConfirmPassword) {
+      alert("Confirm Password must match Password!");
+      return;
+    }
+  
+    try {
+      const response = await fetch("http://localhost:5000/api/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: signupName, password: signupPassword }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        // Handle "username already exists" error
+        if (data.message === "Username already exists") {
+          alert("Username is already taken. Please choose another.");
+          return;
+        }
+        throw new Error(data.message || "Signup failed");
+      }
+  
+      alert("Signup successful!");
+    } catch (error) {
+      console.log("Signup Error:", error.message);
+      alert(error.message);
+    }
+  };
+  
+  
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -49,9 +90,13 @@ export default function AuthForms() {
           <div className="relative p-8">
             {/* Header with animated underline */}
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-bold tracking-tight">{isLogin ? "Welcome back" : "Create account"}</h1>
+              <h1 className="text-3xl font-bold tracking-tight">
+                {isLogin ? "Welcome back" : "Create account"}
+              </h1>
               <p className="text-muted-foreground mt-2">
-                {isLogin ? "Sign in to access your account" : "Sign up to get started with our service"}
+                {isLogin
+                  ? "Sign in to access your account"
+                  : "Sign up to get started with our service"}
               </p>
               <motion.div
                 className="h-1 w-12 bg-primary rounded-full mx-auto mt-4"
@@ -91,7 +136,10 @@ export default function AuthForms() {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <Label htmlFor="password">Password</Label>
-                        <a href="#" className="text-sm text-primary hover:underline">
+                        <a
+                          href="#"
+                          className="text-sm text-primary hover:underline"
+                        >
                           Forgot password?
                         </a>
                       </div>
@@ -110,7 +158,11 @@ export default function AuthForms() {
                           className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
                         </button>
                       </div>
                     </div>
@@ -118,7 +170,9 @@ export default function AuthForms() {
                       <Checkbox
                         id="remember"
                         checked={rememberMe}
-                        onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                        onCheckedChange={(checked) =>
+                          setRememberMe(checked as boolean)
+                        }
                       />
                       <Label htmlFor="remember" className="text-sm font-normal">
                         Remember me
@@ -130,7 +184,11 @@ export default function AuthForms() {
                         className="ml-2"
                         initial={{ x: 0 }}
                         whileHover={{ x: 5 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 10,
+                        }}
                       >
                         <ArrowRight className="h-4 w-4" />
                       </motion.div>
@@ -139,35 +197,21 @@ export default function AuthForms() {
                 ) : (
                   <form onSubmit={handleSignupSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="name">Full Name</Label>
+                      <Label htmlFor="username">Username</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="name"
+                          id="username"
                           type="text"
-                          placeholder="John Doe"
+                          placeholder="Username"
                           className="pl-10"
-                          value={signupName}
+                          value={signupName} // Assuming you are still using signupName for Username
                           onChange={(e) => setSignupName(e.target.value)}
                           required
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          id="signup-email"
-                          type="email"
-                          placeholder="m@example.com"
-                          className="pl-10"
-                          value={signupEmail}
-                          onChange={(e) => setSignupEmail(e.target.value)}
-                          required
-                        />
-                      </div>
-                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
                       <div className="relative">
@@ -185,17 +229,54 @@ export default function AuthForms() {
                           className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                           onClick={() => setShowPassword(!showPassword)}
                         >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
                         </button>
                       </div>
                     </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          id="confirm-password"
+                          type={showPassword ? "text" : "password"}
+                          className="pl-10 pr-10"
+                          value={signupConfirmPassword}
+                          onChange={(e) =>
+                            setSignupConfirmPassword(e.target.value)
+                          }
+                          required
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-5 w-5" />
+                          ) : (
+                            <Eye className="h-5 w-5" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
                     <Button type="submit" className="w-full">
                       Create account
                       <motion.div
                         className="ml-2"
                         initial={{ x: 0 }}
                         whileHover={{ x: 5 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 10,
+                        }}
                       >
                         <ArrowRight className="h-4 w-4" />
                       </motion.div>
@@ -208,7 +289,9 @@ export default function AuthForms() {
             {/* Form toggle */}
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
-                {isLogin ? "Don't have an account?" : "Already have an account?"}
+                {isLogin
+                  ? "Don't have an account?"
+                  : "Already have an account?"}
                 <button
                   type="button"
                   onClick={toggleForm}
@@ -226,7 +309,9 @@ export default function AuthForms() {
                   <div className="w-full border-t border-border"></div>
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
@@ -254,7 +339,11 @@ export default function AuthForms() {
                   Google
                 </Button>
                 <Button variant="outline" className="w-full">
-                  <svg className="mr-2 h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="mr-2 h-4 w-4"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
                   </svg>
                   Facebook
@@ -284,6 +373,5 @@ export default function AuthForms() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
