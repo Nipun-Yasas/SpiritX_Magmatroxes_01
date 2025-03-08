@@ -18,7 +18,7 @@ export default function AuthForms() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [signupName, setSignupName] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
+ 
   const [signupPassword, setSignupPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
@@ -52,27 +52,23 @@ export default function AuthForms() {
     }
   
     try {
-      const response = await fetch("http://localhost:5000/api/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://localhost:5000/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ username: signupName, password: signupPassword }),
       });
   
       const data = await response.json();
-  
-      if (!response.ok) {
-        // Handle "username already exists" error
-        if (data.message === "Username already exists") {
-          alert("Username is already taken. Please choose another.");
-          return;
-        }
-        throw new Error(data.message || "Signup failed");
+      if (response.ok) {
+        alert(data.message); // Display success message
+      } else {
+        alert(data.message); // Display error message from backend
       }
-  
-      alert("Signup successful!");
     } catch (error) {
-      console.log("Signup Error:", error.message);
-      alert(error.message);
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
     }
   };
   
