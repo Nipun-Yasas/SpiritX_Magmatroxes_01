@@ -41,6 +41,15 @@ export default function AuthForms() {
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
+    setLoginError("");
+    setSignUpError("")
+    setLoginPassword("");
+    setLoginName("")
+
+    setSignupName("")
+    setSignupPassword("")
+    setSignupConfirmPassword("")
+
   };
 
   const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -136,8 +145,9 @@ export default function AuthForms() {
         setLoginError(data.message || "Invalid username or password");
       }
     } catch (error) {
-      console.error("Error during login:", error);
+      
       setLoginError("An error occurred while logging in.");
+      
     }
   };
   
@@ -298,7 +308,7 @@ export default function AuthForms() {
                         Remember me
                       </Label>
                     </div>
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full" disabled={!loginName || !loginPassword}>
                       Log in
                       <motion.div
                         className="ml-2"
