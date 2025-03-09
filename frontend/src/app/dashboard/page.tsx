@@ -5,24 +5,35 @@ import { useRouter } from "next/navigation";
 
 const Dashboard = () => {
     const [username, setUsername] = useState<string | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [toke, setToken] = useState<string | null>(null);
+
     const router = useRouter();
 
     useEffect(() => {
         const storedUsername = localStorage.getItem("username");
         const token = localStorage.getItem("token");
+        setToken(token);
 
         if (!token) {
-            router.push("/signIn");
+            router.push("/signUp");
         } else {
             setUsername(storedUsername); 
+            setIsAuthenticated(true);
         }
     }, []);
 
     const handleLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("username");
-        router.push("/signIn");
+        router.push("/signUp");
     };
+
+    if (!isAuthenticated) {
+        return (<>
+        {toke ? <h1 className="text-red-500 text-2xl">Access denied</h1> : <></>}
+        </>)
+    }
 
     return (
         <div style={{ textAlign: "center", marginTop: "50px" }}>

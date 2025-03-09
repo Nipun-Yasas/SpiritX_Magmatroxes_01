@@ -2,31 +2,105 @@
 
 import type React from "react";
 
+
+import { Dialog, DialogBackdrop, DialogPanel, DialogTitle } from '@headlessui/react'
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Eye, EyeOff, Lock, Mail, User } from "lucide-react";
-import { useState } from "react";
+import { ArrowRight, Eye, EyeOff, Lock, User } from "lucide-react";
+
 
 export default function AuthForms() {
+
+  const router = useRouter();
+
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Form state
+  const [open, setOpen] = useState(false)
+
+ 
   const [loginName, setLoginName] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [signupName, setSignupName] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [loginError, setLoginError] = useState("");
  
+  const [signupName, setSignupName] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
   const [signupConfirmPassword, setSignupConfirmPassword] = useState("");
-  const [signupError, setSignupError] = useState("");
+  const [signUpError, setSignUpError] = useState("");
+  const [signUpTypingError,setsignUpTypingError] = useState("");
+  const [signUpPasswordError, setSignUpPasswordError] = useState("");
+  const [signupConfirmPasswordError,setsignupConfirmPasswordError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState("");
 
   const toggleForm = () => {
     setIsLogin(!isLogin);
+  };
+
+  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setsignUpTypingError("");
+    setSignupName(value); 
+    
+    if (value.length < 8) {
+      return setsignUpTypingError("Username must be at least 8 characters long.");
+    }
+    setSignUpError("");
+    
+  };
+
+  const handlePasswordChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSignupPassword(value);
+
+    setSignUpPasswordError("");
+    setPasswordStrength("");
+
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/;
+
+    if (!passwordRegex.test(value)) {
+      setSignUpPasswordError("Password must contain at least one lowercase letter, one uppercase letter, and one special character!");
+    }
+    const hasLowercase = /[a-z]/.test(value);
+    const hasUppercase = /[A-Z]/.test(value);
+    const hasNumber = /[0-9]/.test(value);
+    const hasSpecialChar = /[\W_]/.test(value);
+
+    let strength = 0;
+    if (hasLowercase) strength++;
+    if (hasUppercase) strength++;
+    if (hasNumber) strength++;
+    if (hasSpecialChar) strength++;
+
+
+    if (strength <= 1) {
+        setPasswordStrength("Weak");
+    }else if (strength === 2) {
+        setPasswordStrength("Medium");
+    }else if (strength >= 3) {
+        setPasswordStrength("Strong");
+    }
+    setSignUpError("");
+    
+  };
+
+  const handleConfirmPasswordChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setsignupConfirmPasswordError("");
+    setPasswordStrength("");
+    setSignupConfirmPassword(value);
+
+    if (signupPassword !== value) {
+      return setsignupConfirmPasswordError("Passwords do not match.");
+    }
+    setSignUpError("");
+   
   };
 
   const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -50,11 +124,9 @@ export default function AuthForms() {
       });
       
       const data = await response.json();
-      console.log("Backend response:", data); 
       
       if (response.ok) {
-        console.log("Login successful:", data);
-
+      
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
 
@@ -72,16 +144,22 @@ export default function AuthForms() {
 
   const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSignUpError("");
   
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}$/;
-  
+    
+    if(signupName.length<8){
+      setSignUpError("User name should be at least 8 characters");
+      return;
+    }
+
     if (!passwordRegex.test(signupPassword)) {
-      alert("Password must contain at least one lowercase letter, one uppercase letter, and one special character!");
+      setSignUpError("Password must contain at least one lowercase letter, one uppercase letter, and one special character!");
       return;
     }
   
     if (signupPassword !== signupConfirmPassword) {
-      alert("Confirm Password must match Password!");
+      setSignUpError("Confirm Password must match Password!");
       return;
     }
   
@@ -96,13 +174,18 @@ export default function AuthForms() {
   
       const data = await response.json();
       if (response.ok) {
-        alert(data.message); // Display success message
+        setOpen(true);
+
+        setTimeout(() => {
+          setOpen(false);
+          router.push('/dashboard')
+        }, 2000);
+
       } else {
-        alert(data.message); // Display error message from backend
+        setSignUpError(data.message || "Invalid username or password");
       }
     } catch (error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      setSignUpError("Error");
     }
   };
   
@@ -110,15 +193,16 @@ export default function AuthForms() {
   
 
   return (
+  <>
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <div className="w-full max-w-md">
         <div className="bg-card rounded-xl shadow-lg overflow-hidden relative">
-          {/* Background animated elements */}
+          
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
 
           <div className="relative p-8">
-            {/* Header with animated underline */}
+            
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold tracking-tight">
                 {isLogin ? "Welcome back" : "Create account"}
@@ -137,7 +221,7 @@ export default function AuthForms() {
               />
             </div>
 
-            {/* Form container with animations */}
+          
             <AnimatePresence mode="wait">
               <motion.div
                 key={isLogin ? "login" : "signup"}
@@ -153,7 +237,7 @@ export default function AuthForms() {
                       <div className="relative">
                       <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="loginusername"
+                          id="login-username"
                           type="text"
                           placeholder="Enter your username here"
                           className="pl-10"
@@ -161,7 +245,12 @@ export default function AuthForms() {
                           onChange={(e) => setLoginName(e.target.value)}
                           required
                         />
-                      </div>
+                        {signUpError && (
+                    <div style={{ color: 'red', marginTop: '10px' }}>
+                      {signUpError}
+                    </div>
+                    )}
+                    </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
@@ -176,7 +265,7 @@ export default function AuthForms() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="loginpassword"
+                          id="login-password"
                           type={showPassword ? "text" : "password"}
                           className="pl-10 pr-10"
                           value={loginPassword}
@@ -199,6 +288,7 @@ export default function AuthForms() {
                     <div className="flex items-center space-x-2">
                       <Checkbox
                         id="remember"
+                        name="remember"
                         checked={rememberMe}
                         onCheckedChange={(checked) =>
                           setRememberMe(checked as boolean)
@@ -209,7 +299,7 @@ export default function AuthForms() {
                       </Label>
                     </div>
                     <Button type="submit" className="w-full">
-                      Sign in
+                      Log in
                       <motion.div
                         className="ml-2"
                         initial={{ x: 0 }}
@@ -242,9 +332,15 @@ export default function AuthForms() {
                           placeholder="Username"
                           className="pl-10"
                           value={signupName} 
-                          onChange={(e) => setSignupName(e.target.value)}
+                          onChange={(e) => handleUsernameChange(e)}
                           required
                         />
+                        {signUpTypingError && (
+                    <div style={{ color: 'red', marginTop: '10px' }}>
+                      {signUpTypingError}
+                    </div>
+                    )}
+                        
                       </div>
                     </div>
 
@@ -257,9 +353,24 @@ export default function AuthForms() {
                           type={showPassword ? "text" : "password"}
                           className="pl-10 pr-10"
                           value={signupPassword}
-                          onChange={(e) => setSignupPassword(e.target.value)}
+                          onChange={(e) => handlePasswordChange(e)}
                           required
                         />
+                        {passwordStrength && (
+                            <div className={`mt-2 text-center ${
+                                passwordStrength.includes("Strong") ? "text-green-500" :
+                                passwordStrength.includes("Medium") ? "text-yellow-500" :
+                                "text-red-500"
+                            }`}>
+                                {passwordStrength}
+                            </div>
+                        )}
+
+                        {signUpPasswordError && (
+                    <div style={{ color: 'red', marginTop: '10px' }}>
+                      {signUpPasswordError}
+                    </div>
+                    )}
                         <button
                           type="button"
                           className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
@@ -283,11 +394,15 @@ export default function AuthForms() {
                           type={showPassword ? "text" : "password"}
                           className="pl-10 pr-10"
                           value={signupConfirmPassword}
-                          onChange={(e) =>
-                            setSignupConfirmPassword(e.target.value)
+                          onChange={(e) => handleConfirmPasswordChange(e)
                           }
                           required
                         />
+                        {signupConfirmPasswordError && (
+                    <div style={{ color: 'red', marginTop: '10px' }}>
+                      {signupConfirmPasswordError}
+                    </div>
+                    )}
                         <button
                           type="button"
                           className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
@@ -302,7 +417,7 @@ export default function AuthForms() {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full">
+                    <Button type="submit" className="w-full" disabled={!signupName || !signupPassword || !signupConfirmPassword}>
                       Create account
                       <motion.div
                         className="ml-2"
@@ -317,12 +432,18 @@ export default function AuthForms() {
                         <ArrowRight className="h-4 w-4" />
                       </motion.div>
                     </Button>
+                    {signUpError && (
+                    <div style={{ color: 'red', marginTop: '10px' }}>
+                      {signUpError}
+                    </div>
+                    )}
+                    
                   </form>
                 )}
               </motion.div>
             </AnimatePresence>
 
-            {/* Form toggle */}
+            
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 {isLogin
@@ -337,77 +458,47 @@ export default function AuthForms() {
                 </button>
               </p>
             </div>
-
-            {/* Social login options */}
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <Button variant="outline" className="w-full">
-                  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
-                    <path
-                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                      fill="#4285F4"
-                    />
-                    <path
-                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                      fill="#34A853"
-                    />
-                    <path
-                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                      fill="#FBBC05"
-                    />
-                    <path
-                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                      fill="#EA4335"
-                    />
-                    <path d="M1 1h22v22H1z" fill="none" />
-                  </svg>
-                  Google
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <svg
-                    className="mr-2 h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                  </svg>
-                  Facebook
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
-
-        {/* Animated decoration */}
-        <div className="mt-8 text-center">
-          <motion.p
-            className="text-sm text-muted-foreground"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            By signing up, you agree to our{" "}
-            <a href="#" className="text-primary hover:underline">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-primary hover:underline">
-              Privacy Policy
-            </a>
-          </motion.p>
-        </div>
+        
       </div>
     </div>
+
+    <Dialog open={open} onClose={setOpen} className="relative z-10">
+      <DialogBackdrop
+        transition
+        className="fixed inset-0 bg-gray-500/75 transition-opacity data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+      />
+
+      <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+          <DialogPanel
+            transition
+            className="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all data-closed:translate-y-4 data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in sm:my-8 sm:w-full sm:max-w-lg data-closed:sm:translate-y-0 data-closed:sm:scale-95"
+          >
+            <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className="mt-2 text-center ">
+                    <p className="text-xl text-green-500">
+                     Succesfully Signed Up.
+                    </p>
+                    <p>Please login in with the given credential</p>
+                  </div>
+            </div>
+            <div className="px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6 justify-center">
+              
+              <button
+                type="button"
+                data-autofocus
+                onClick={() => setOpen(false)}
+                className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 shadow-xs ring-gray-300 ring-inset hover:bg-gray-50 sm:mt-0 sm:w-auto"
+              >
+                Close
+              </button>
+            </div>
+          </DialogPanel>
+        </div>
+      </div>
+    </Dialog>
+  </>
   );
 }
