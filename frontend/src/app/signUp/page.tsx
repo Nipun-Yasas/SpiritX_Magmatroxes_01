@@ -233,11 +233,11 @@ export default function AuthForms() {
                 {isLogin ? (
                   <form onSubmit={handleLoginSubmit} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="login-username">Username</Label>
+                      <Label htmlFor="loginusername">Username</Label>
                       <div className="relative">
                       <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="login-username"
+                          id="loginusername"
                           type="text"
                           placeholder="Enter your username here"
                           className="pl-10"
@@ -254,7 +254,7 @@ export default function AuthForms() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <Label htmlFor="login-password">Password</Label>
+                        <Label htmlFor="loginpassword">Password</Label>
                         <a
                           href="#"
                           className="text-sm text-primary hover:underline"
@@ -265,7 +265,7 @@ export default function AuthForms() {
                       <div className="relative">
                         <Lock className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
                         <Input
-                          id="login-password"
+                          id="loginpassword"
                           type={showPassword ? "text" : "password"}
                           className="pl-10 pr-10"
                           value={loginPassword}
